@@ -55,33 +55,117 @@ const getAllBeds = async (req, res) => {
     }
 }
 
+
+// const getAllUsers = async (req, res) => {
+//     try {
+//         const receipts = await RecieptModal.find({});
+//         const result = [];
+
+//         for (const receipt of receipts) {
+//             if (
+//                 receipt.bedNeeded === "Yes" &&
+//                 receipt.bedAllocated === "No"
+//             ) {
+//                 result.push(receipt);   // 👈 duplicate allowed
+//             }
+//         }
+
+//         res.json({
+//             success: true,
+//             users: result
+//         });
+
+//     } catch (error) {
+//         console.log(error);
+//         res.json({ success: false, message: error.message });
+//     }
+// };
+
+
+
 const getAllUsers = async (req, res) => {
     try {
-        // Fetch all receipts
         const receipts = await RecieptModal.find({});
+        const result = [];
 
-        // Map to userData and deduplicate by _id
-        const uniqueUsersMap = new Map();
+        for (const receipt of receipts) {
+            if (
+                receipt.bedNeeded === "Yes" &&
+                receipt.bedAllocated === "No"
+            ) {
+                // Check if user already has an active bed receipt
+                const activeBedReceipt = await bedReceiptModel.findOne({
+                    userId: receipt.userId,
+                    dischargeDate: { $gt: Date.now() }
+                });
 
-        receipts.forEach((receipt) => {
-            if (receipt.userData && receipt.userData._id) {
-                uniqueUsersMap.set(receipt.userData._id.toString(), receipt.userData);
+                if (activeBedReceipt) {
+                    // Create a new Bed Receipt document with same dates (preserving allocation)
+                    const newBedReceipt = new bedReceiptModel({
+                        userId: activeBedReceipt.userId,
+                        bedId: activeBedReceipt.bedId,
+                        bedNumber: activeBedReceipt.bedNumber,
+                        patientName: activeBedReceipt.patientName,
+                        age: activeBedReceipt.age,
+                        disease: receipt.disease,
+                        doctorName: receipt.docData.name,
+                        wardType: activeBedReceipt.wardType,
+                        allocationDate: activeBedReceipt.allocationDate,
+                        dischargeDate: activeBedReceipt.dischargeDate
+                    });
+
+                    await newBedReceipt.save();
+
+                    // Mark current receipt request as allocated
+                    receipt.bedAllocated = "Yes";
+                    await receipt.save();
+
+                } else {
+                    // If no active bed, add to result for manual allocation
+                    result.push(receipt);
+                }
             }
+        }
+
+        res.json({
+            success: true,
+            users: result
         });
 
-        const users = Array.from(uniqueUsersMap.values());
-
-        res.json({ success: true, users });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
     }
-}
+};
+
+// const getAllUsers = async (req, res) => {
+//     try {
+//         // Fetch all receipts
+//         const receipts = await RecieptModal.find({});
+
+//         // Map to userData and deduplicate by _id
+//         const uniqueUsersMap = new Map();
+
+//         receipts.forEach((receipt) => {
+//             if (receipt.userData && receipt.userData._id) {
+//                 uniqueUsersMap.set(receipt.userData._id.toString(), receipt.userData);
+//             }
+//         });
+
+//         const users = Array.from(uniqueUsersMap.values());
+
+//         res.json({ success: true, users });
+//     } catch (error) {
+//         console.log(error);
+//         res.json({ success: false, message: error.message });
+//     }
+// }
 
 const allocateBed = async (req, res) => {
     try {
         const { bedId, userId, dischargeDate } = req.body;
         console.log(userId);
+
         if (!bedId || !userId || !dischargeDate) {
             return res.json({ success: false, message: "Missing bedId, userId or dischargeDate" });
         }
@@ -107,9 +191,6 @@ const allocateBed = async (req, res) => {
         bed.dischargeDate = dischargeDate;
         await bed.save();
 
-        // Update User Status
-        await userModel.findByIdAndUpdate(userId, { admissionStatus: "Admitted" });
-
         // Retrieve user age if available, otherwise default (to be handled)
         let age = 0;
         if (user.dob && user.dob !== "Not Selected") {
@@ -119,8 +200,13 @@ const allocateBed = async (req, res) => {
             }
         }
 
-        // Check for existing Appointment Receipt to get Medical Details
+        // Check for existing Appointment Receipt to get Medical Details and mark bed as allocated
         const latestReceipt = await RecieptModal.findOne({ userId }).sort({ createdAt: -1 });
+
+        if (latestReceipt) {
+            latestReceipt.bedAllocated = "Yes";
+            await latestReceipt.save();
+        }
 
         const disease = latestReceipt ? latestReceipt.disease : "Not Specified";
         let doctorName = "Not Assigned";
@@ -153,5 +239,58 @@ const allocateBed = async (req, res) => {
     }
 };
 
+const dischargePatient = async (req, res) => {
+    try {
+        const { bedId, receiptId } = req.body;
 
-export { staffLogin, getAllBeds, getAllUsers, allocateBed }
+        if (!bedId || !receiptId) {
+            return res.json({ success: false, message: "Missing Details" });
+        }
+
+        const bedReceipt = await bedReceiptModel.findById(receiptId);
+        if (!bedReceipt) {
+            return res.json({ success: false, message: "Receipt not found" });
+        }
+
+        // Update discharge date to now
+        bedReceipt.dischargeDate = Date.now();
+        await bedReceipt.save();
+
+        const bed = await bedModel.findById(bedId);
+        if (bed) {
+            bed.status = "available";
+            bed.userId = null;
+            bed.patientName = "";
+            bed.allocationDate = null;
+            bed.dischargeDate = null;
+            await bed.save();
+        }
+
+        // Update User Status
+        if (bedReceipt.userId) {
+            await userModel.findByIdAndUpdate(bedReceipt.userId, { admissionStatus: "Discharged" });
+        }
+
+        req.io.emit("bedUpdate", { message: "Patient Discharged" });
+
+        res.json({ success: true, message: "Patient discharged successfully" });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+
+
+const getAllBedReceipts = async (req, res) => {
+    try {
+        const receipts = await bedReceiptModel.find({}).sort({ allocationDate: -1 });
+        res.json({ success: true, receipts });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { staffLogin, getAllBeds, getAllUsers, allocateBed, getAllBedReceipts, dischargePatient }

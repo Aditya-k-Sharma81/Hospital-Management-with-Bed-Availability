@@ -48,8 +48,6 @@ export default function DoctorDashboard() {
 
   // ========== SUBMIT RECEIPT ==========
   const handleSubmit = async () => {
-    console.log("=== RECEIPT SUBMISSION ===");
-
     const userId = selectedAppointment?.userData?._id;
     const docId = selectedAppointment?.docData?._id;
     const appointmentId = selectedAppointment?._id;
@@ -68,12 +66,7 @@ export default function DoctorDashboard() {
         backendUrl + "/api/doctor/reciept",
         receiptBody
       );
-
-      console.log("API RESPONSE:", data);
-
-      // ⭐ Refresh list instantly after marking completed
       await fetchAppointments();
-
     } catch (error) {
       console.error("API ERROR:", error.response?.data || error.message);
     }
@@ -83,208 +76,220 @@ export default function DoctorDashboard() {
 
   const doctorInfo = appointments.length > 0 ? appointments[0].docData : null;
 
+  // Filter out cancelled appointments
+  const activeAppointments = appointments.filter(appt => !appt.cancelled);
+
   return (
-    <div className="p-4 md:p-6 bg-gray-100 min-h-screen w-full flex justify-center">
+    <div className="bg-[#F8F9FD] w-full font-sans h-[calc(100vh-80px)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-blue-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
 
-      {/* MODAL CSS */}
-      <style>
-        {`
-          .modal {
-            display: flex;
-            position: fixed;
-            z-index: 50;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-          }
-
-          .modal-content {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 450px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border-radius: 10px;
-            position: relative;
-            animation: fadeIn 0.3s ease-in-out;
-          }
-
-          .modal-content::-webkit-scrollbar {
-            display: none;
-          }
-
-          .close {
-            color: #888;
-            font-size: 28px;
-            cursor: pointer;
-            position: absolute;
-            top: 10px;
-            right: 20px;
-          }
-
-          .close:hover {
-            color: black;
-          }
-        `}
-      </style>
-
-      <div className="w-full max-w-4xl">
-
-        {/* Doctor Header */}
-        {doctorInfo && (
-          <div className="relative bg-white p-5 rounded-xl shadow-md flex flex-col md:flex-row gap-4 items-center">
-
-            
-
-            <img
-              src={doctorInfo.image}
-              alt="Doctor"
-              className="w-24 h-24 rounded-full object-cover"
-            />
-
-            <div className="text-center md:text-left">
-              <h1 className="text-2xl font-bold">{doctorInfo.name}</h1>
-              <p className="text-gray-700">{doctorInfo.speciality}</p>
-              <p className="text-gray-500">{doctorInfo.degree}</p>
-              <p className="text-gray-500">{doctorInfo.experience}</p>
-            </div>
+        {/* Header Section */}
+        <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Doctor Dashboard</h1>
+            <p className="text-gray-500 mt-2">Welcome back, manage your appointments and patients.</p>
           </div>
-        )}
 
-        {/* Appointment List */}
-        <div className="mt-8 bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-xl font-bold mb-4">Appointments</h2>
+          {/* Doctor Profile Card (Mini) */}
+          {doctorInfo && (
+            <div className="flex items-center gap-4 bg-white px-5 py-3 rounded-2xl shadow-sm border border-gray-100">
+              <img
+                src={doctorInfo.image}
+                alt="Doctor"
+                className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-100"
+              />
+              <div>
+                <p className="font-bold text-gray-800 leading-tight">{doctorInfo.name}</p>
+                <p className="text-xs text-blue-600 font-medium">{doctorInfo.speciality}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
-          {appointments
-            .filter((appt) => !appt.cancelled)
-            .map((appointment, index) => {
+        {/* Stats Summary (Optional) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-blue-50">
+            <div className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Upcoming</div>
+            <div className="text-2xl font-bold text-gray-800">{activeAppointments.filter(a => !a.isCompleted).length}</div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-green-50">
+            <div className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Completed</div>
+            <div className="text-2xl font-bold text-gray-800">{activeAppointments.filter(a => a.isCompleted).length}</div>
+          </div>
+        </div>
+
+
+        {/* Appointments Section */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            Today's Appointments
+            <span className="text-sm font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{activeAppointments.length}</span>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {activeAppointments.map((appointment, index) => {
               const isCompleted = Boolean(appointment.isCompleted);
 
               return (
                 <div
                   key={index}
-                  className="flex flex-col md:flex-row md:items-center gap-4 border-b pb-4 mb-4"
+                  className={`group bg-white rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg ${isCompleted ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-blue-200"
+                    }`}
                 >
-                  <img
-                    src={appointment.userData.image}
-                    alt="User"
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={appointment.userData.image}
+                        alt="User"
+                        className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-50"
+                      />
+                      <div>
+                        <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                          {appointment.userData.name}
+                        </h3>
+                        <div className="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded-md inline-block mt-1">
+                          {appointment.userData.phone}
+                        </div>
+                      </div>
+                    </div>
 
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold">
-                      {appointment.userData.name}
-                    </h3>
-                    <p className="text-gray-600">Time: {appointment.slotTime}</p>
-                    <p className="text-gray-600">Date: {appointment.slotDate}</p>
-                    <p className="text-gray-600">Phone: {appointment.userData.phone}</p>
-                  </div>
-
-                  {/* Status */}
-                  <div>
                     {isCompleted ? (
-                      <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg">
-                        Completed
+                      <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        Done
                       </span>
                     ) : (
-                      <button
-                        onClick={() => openModal(appointment)}
-                        className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition"
-                      >
+                      <span className="bg-yellow-50 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                        <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
                         Upcoming
-                      </button>
+                      </span>
                     )}
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4 py-4 border-t border-b border-gray-50 mb-4">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Date</p>
+                      <p className="text-sm font-semibold text-gray-700">{appointment.slotDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Time</p>
+                      <p className="text-sm font-semibold text-gray-700 text-right">{appointment.slotTime}</p>
+                    </div>
+                  </div>
+
+                  {!isCompleted && (
+                    <button
+                      onClick={() => openModal(appointment)}
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      Prescribe & Admit
+                    </button>
+                  )}
+
+                  {isCompleted && (
+                    <div className="w-full py-2.5 bg-gray-50 text-gray-400 text-sm font-medium rounded-xl text-center cursor-not-allowed">
+                      Consultation Completed
+                    </div>
+                  )}
                 </div>
               );
             })}
+
+            {activeAppointments.length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
+                <div className="p-4 bg-gray-50 rounded-full mb-4">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">No Appointments</h3>
+                <p className="text-gray-500 max-w-xs mt-1">You don't have any upcoming appointments scheduled for today.</p>
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
 
       {/* ===================== MODAL ===================== */}
       {showModal && (
-        <div className="modal" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <span className="close" onClick={closeModal}>&times;</span>
-
-            <h2 className="text-xl font-bold mb-4">Receipt Details</h2>
-
-            {/* Readonly Fields */}
-            <div className="mb-3">
-              <label className="font-medium">Patient Name</label>
-              <input
-                type="text"
-                value={selectedAppointment?.userData.name}
-                readOnly
-                className="w-full border p-2 rounded mt-1"
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity" onClick={closeModal}>
+          <div
+            className="bg-white w-full max-w-lg rounded-2xl shadow-2xl transform transition-all scale-100 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-white text-lg font-bold">Consultation Details</h2>
+              <button onClick={closeModal} className="text-white/80 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
 
-            <div className="mb-3">
-              <label className="font-medium">Phone Number</label>
-              <input
-                type="text"
-                value={selectedAppointment?.userData.phone}
-                readOnly
-                className="w-full border p-2 rounded mt-1"
-              />
-            </div>
+            {/* Modal Content */}
+            <div className="p-6">
 
-            {/* Medical Inputs */}
-            <h3 className="text-lg font-semibold mb-2">Medical Details</h3>
+              {/* Patient Summary */}
+              <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                  {selectedAppointment?.userData.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">{selectedAppointment?.userData.name}</p>
+                  <p className="text-xs text-gray-500">Phone: {selectedAppointment?.userData.phone}</p>
+                </div>
+              </div>
 
-            <div className="mb-3">
-              <label className="font-medium">Disease / Problem</label>
-              <input
-                type="text"
-                value={disease}
-                onChange={(e) => setDisease(e.target.value)}
-                className="w-full border p-2 rounded mt-1"
-                placeholder="Eg: Fever, Cold"
-              />
-            </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Diagnosis / Disease</label>
+                  <input
+                    type="text"
+                    value={disease}
+                    onChange={(e) => setDisease(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="e.g. Viral Fever, Acute Migraine"
+                  />
+                </div>
 
-            <div className="mb-3">
-              <label className="font-medium">Prescription</label>
-              <textarea
-                rows="3"
-                value={prescription}
-                onChange={(e) => setPrescription(e.target.value)}
-                className="w-full border p-2 rounded mt-1"
-                placeholder="Medicines with dosage"
-              ></textarea>
-            </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Prescription</label>
+                  <textarea
+                    rows="4"
+                    value={prescription}
+                    onChange={(e) => setPrescription(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 resize-none"
+                    placeholder="List medicines, dosage, and instructions..."
+                  ></textarea>
+                </div>
 
-            <div className="mb-3">
-              <label className="font-medium">Bed Needed?</label>
-              <select
-                value={bedNeeded}
-                onChange={(e) => setBedNeeded(e.target.value)}
-                className="w-full border p-2 rounded mt-1"
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Hospital Admission Required?</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={`cursor-pointer border-2 rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${bedNeeded === 'yes' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-100 bg-white hover:bg-gray-50'}`}>
+                      <input type="radio" name="bedNeeded" value="Yes" checked={bedNeeded === 'Yes'} onChange={(e) => setBedNeeded(e.target.value)} className="hidden" />
+                      <span className="font-bold">Yes, Admit</span>
+                    </label>
+                    <label className={`cursor-pointer border-2 rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${bedNeeded === 'no' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-100 bg-white hover:bg-gray-50'}`}>
+                      <input type="radio" name="bedNeeded" value="No" checked={bedNeeded === 'No'} onChange={(e) => setBedNeeded(e.target.value)} className="hidden" />
+                      <span className="font-bold">No, Outpatient</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!disease || !prescription || !bedNeeded}
+                className="mt-8 w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
               >
-                <option value="" disabled>Select option</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </div>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Complete Consultation
+              </button>
 
-            <button
-              onClick={handleSubmit}
-              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Submit & Close
-            </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
-
-

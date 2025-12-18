@@ -11,89 +11,83 @@ dotenv.config();
 
 
 const changeAvailability = async (req, res) => {
-    try {
-        const { docId } = req.body;
+  try {
+    const { docId } = req.body;
 
-        // 1. Check if docId is provided
-        if (!docId) {
-            return res.json({ success: false, message: "docId is required" });
-        }
-
-        // 2. Find doctor
-        const docData = await doctorModel.findById(docId);
-
-        if (!docData) {
-            return res.json({ success: false, message: "Doctor not found" });
-        }
-
-        // 3. Toggle availability
-        await doctorModel.findByIdAndUpdate(
-            docId,
-            { available: !docData.available }
-        );
-
-        res.json({ success: true, message: 'Availability Changed' });
-
-    } catch (error) {
-        res.json({ success: false, message: error.message });
+    // 1. Check if docId is provided
+    if (!docId) {
+      return res.json({ success: false, message: "docId is required" });
     }
+
+    // 2. Find doctor
+    const docData = await doctorModel.findById(docId);
+
+    if (!docData) {
+      return res.json({ success: false, message: "Doctor not found" });
+    }
+
+    // 3. Toggle availability
+    await doctorModel.findByIdAndUpdate(
+      docId,
+      { available: !docData.available }
+    );
+
+    res.json({ success: true, message: 'Availability Changed' });
+
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
 };
 
 const doctorList = async (req, res) => {
-    try 
-    {
-        const doctors = await doctorModel.find({}).select(["-password", "-email"]);
-        res.json({success: true,doctors});
-    } catch (error){
-        res.json({success: false,message: error.message});
-    }
+  try {
+    const doctors = await doctorModel.find({}).select(["-password", "-email"]);
+    res.json({ success: true, doctors });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
 };
 
 
-const doctorLogin = async(req,res) =>{
-    try 
-    {
-        const {email, password} = req.body;
-        const user = await doctorModel.findOne({email});
+const doctorLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await doctorModel.findOne({ email });
 
-        if(!user)
-        {
-            return res.json({success:false, message:"User does not exist"});
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if(isMatch)
-        {
-            const token = jwt.sign({id:user._id}, process.env.JWT_SECRET);
-            res.json({success:true, token})
-        }
-        else
-        {
-            res.json({success:false, message: "Invalid credentials"})
-        }
-    }catch(error)
-    {
-        return res.status(500).json({ success: false, message: error.message });
+    if (!user) {
+      return res.json({ success: false, message: "User does not exist" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      res.json({ success: true, token })
+    }
+    else {
+      res.json({ success: false, message: "Invalid credentials" })
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
 }
 
 
 const doctorAppointmentList = async (req, res) => {
-    try {
-        
-        const doctorId = req.userId;
+  try {
 
-        if (!doctorId) {
-            return res.json({ success: false, message: "Doctor ID not found" });
-        }
-        const appointments = await appointmentModel.find({ docId: doctorId });
+    const doctorId = req.userId;
 
-        res.json({ success: true, appointments });
-    } 
-    catch (error) {
-        return res.json({ success: false, message: error.message });
+    if (!doctorId) {
+      return res.json({ success: false, message: "Doctor ID not found" });
     }
+    const appointments = await appointmentModel.find({ docId: doctorId });
+
+    res.json({ success: true, appointments });
+  }
+  catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
 };
 
 
@@ -124,11 +118,17 @@ const Reciept = async (req, res) => {
       return res.status(404).json({ success: false, message: "Doctor not found" });
     }
 
+    // Fetch appointment to get slotDate and slotTime
+    const appointment = await appointmentModel.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
     // Convert Mongoose document into plain JS object
     const userData = JSON.parse(JSON.stringify(user));
     const docData = JSON.parse(JSON.stringify(doctor));
 
-    // Create Receipt
+    // Create Receipt with appointment date/time
     const newReceipt = await RecieptModal.create({
       userId,
       docId,
@@ -171,4 +171,4 @@ const Reciept = async (req, res) => {
 };
 
 
-export { changeAvailability, doctorList, doctorLogin,doctorAppointmentList, Reciept};
+export { changeAvailability, doctorList, doctorLogin, doctorAppointmentList, Reciept };

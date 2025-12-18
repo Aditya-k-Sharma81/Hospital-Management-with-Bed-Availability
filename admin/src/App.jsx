@@ -12,12 +12,12 @@ import { Route, Routes } from 'react-router-dom';
 
 import Dashboard from './pages/Admin/Dashboard';
 import AddDoctor from './pages/Admin/AddDoctor';
-import AllAppointment from './pages/Admin/AllAppointment';
 import DoctorsList from './pages/Admin/DoctorsList';
 import Add_Bed from './pages/Admin/Add_Bed';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import Staff_Dashboard from './pages/Staff/Staff_Dashboard';
 import BedAvailability from './pages/Staff/BedAvailability';
+import AllPatient from './pages/Staff/AllPatient';
 
 const App = () => {
   const { aToken } = useContext(AdminContext);
@@ -38,7 +38,6 @@ const App = () => {
           <Routes>
             <Route path='/' element={<></>} />
             <Route path='/admin-dashboard' element={<Dashboard />} />
-            <Route path='/all-appointments' element={<AllAppointment />} />
             <Route path='/add-doctor' element={<AddDoctor />} />
             <Route path='/doctor-list' element={<DoctorsList />} />
             <Route path='/add-bed' element={<Add_Bed />} />
@@ -79,6 +78,7 @@ const App = () => {
             <Route path='/' element={<></>}></Route>
             <Route path='/staff-dashboard' element={<Staff_Dashboard />} />
             <Route path='/staff-bed-availability' element={<BedAvailability />} />
+            <Route path='/staff-all-patients' element={<AllPatient />} />
           </Routes>
         </div>
       </div>

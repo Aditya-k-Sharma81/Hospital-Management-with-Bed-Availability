@@ -9,7 +9,6 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, default: "Not Selected" },
     dob: { type: String, default: "Not Selected" },
     phone: { type: String, default: '0000000000' },
-    admissionStatus: { type: String, default: "New" } // New, Admitted, Discharged
 });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

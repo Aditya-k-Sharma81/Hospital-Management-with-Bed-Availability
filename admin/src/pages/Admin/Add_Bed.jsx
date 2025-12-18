@@ -98,4 +98,4 @@ export default function Add_Bed() {
       </div>
     </form>
   );
-}
+} 

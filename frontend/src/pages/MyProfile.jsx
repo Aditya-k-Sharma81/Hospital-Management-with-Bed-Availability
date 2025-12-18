@@ -11,68 +11,68 @@ const MyProfile = () => {
   const[image, setImage] = useState(false);
 
 
-  const updateUserProfileData = async () => {
-  try {
-    const formData = new FormData();          // <-- FIXED (fromData ❌ → formData ✔)
-    formData.append("name", userData.name);
-    formData.append("phone", userData.phone);
-    formData.append("address", JSON.stringify(userData.address));
-    formData.append("gender", userData.gender);
-    formData.append("dob", userData.dob);
+//   const updateUserProfileData = async () => {
+//   try {
+//     const formData = new FormData();          // <-- FIXED (fromData ❌ → formData ✔)
+//     formData.append("name", userData.name);
+//     formData.append("phone", userData.phone);
+//     formData.append("address", JSON.stringify(userData.address));
+//     formData.append("gender", userData.gender);
+//     formData.append("dob", userData.dob);
 
-    if (image) formData.append("image", image);   // ← image upload correct
+//     if (image) formData.append("image", image);   // ← image upload correct
 
-    const { data } = await axios.post(
-      backendUrl + "/api/user/update-profile",
-      formData,
-      { headers: { token } }
-    );
+//     const { data } = await axios.post(
+//       backendUrl + "/api/user/update-profile",
+//       formData,
+//       { headers: { token } }
+//     );
 
-    if (data.success) {
-      toast.success(data.message);
-      loadUserProfileData();
-      setIsEdit(false);
-      setImage(false);
-    } else {
-      toast.error(data.message);
+//     if (data.success) {
+//       toast.success(data.message);
+//       loadUserProfileData();
+//       setIsEdit(false);
+//       setImage(false);
+//     } else {
+//       toast.error(data.message);
+//     }
+
+//   } catch (error) {
+//     toast.error(error.message);
+//   }
+// };
+
+
+  const updateUserProfileData = async() =>{
+    try
+    {
+      const fromData = new FormData();
+      fromData.append('name', userData.name);
+      fromData.append('phone', userData.phone);
+      fromData.append('address', JSON.stringify(userData.address));
+      fromData.append('gender', userData.gender);
+      fromData.append('dob', userData.dob);
+
+      image && fromData.append('image', image);
+      const {data} = await axios.post(backendUrl + '/api/user/update-profile', fromData,{headers:{token}});
+
+      if(data.success)
+      {
+        toast.success(data.message);
+        loadUserProfileData();
+        setIsEdit(false);
+        setImage(false);
+      }
+      else
+      {
+        toast.error(data.message);
+      }
+
+    }catch(error)
+    {
+      toast.error(error.message);
     }
-
-  } catch (error) {
-    toast.error(error.message);
   }
-};
-
-
-  // const updateUserProfileData = async() =>{
-  //   try
-  //   {
-  //     const fromData = new FormData();
-  //     fromData.append('name', userData.name);
-  //     fromData.append('phone', userData.phone);
-  //     fromData.append('address', JSON.stringify(userData.address));
-  //     fromData.append('gender', userData.gender);
-  //     fromData.append('dob', userData.dob);
-
-  //     image && fromData.append('image', image);
-  //     const {data} = await axios.post(backendUrl + '/api/user/update-profile', fromData,{headers:{token}});
-
-  //     if(data.success)
-  //     {
-  //       toast.success(data.message);
-  //       loadUserProfileData();
-  //       setIsEdit(false);
-  //       setImage(false);
-  //     }
-  //     else
-  //     {
-  //       toast.error(data.message);
-  //     }
-
-  //   }catch(error)
-  //   {
-  //     toast.error(error.message);
-  //   }
-  // }
   return userData && (
     <div className='max-w-lg flex flex-col gap-2 text-sm'>
       {

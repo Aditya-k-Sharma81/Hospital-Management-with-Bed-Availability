@@ -77,17 +77,6 @@ export default function Sidebar() {
               `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? "bg-[#F2F3FF] border-r-4 border-[#5F6FFF]" : ""
               }`
             }
-            to={"/all-appointments"}
-          >
-            <img src={assets.appointment_icon} />
-            <p>Appointment</p>
-          </NavLink>
-
-          <NavLink
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? "bg-[#F2F3FF] border-r-4 border-[#5F6FFF]" : ""
-              }`
-            }
             to={"/add-doctor"}
           >
             <img src={assets.add_icon} />
@@ -160,6 +149,17 @@ export default function Sidebar() {
             {/* Re-using a generic icon or asset for now, or use add_icon/home_icon if no bed icon */}
             <img src={assets.appointment_icon} />
             <p>Bed Status</p>
+          </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? "bg-[#F2F3FF] border-r-4 border-[#5F6FFF]" : ""
+              }`
+            }
+            to={"/staff-all-patients"}
+          >
+            <img src={assets.people_icon} />
+            <p>All Patients</p>
           </NavLink>
         </ul>
       )}

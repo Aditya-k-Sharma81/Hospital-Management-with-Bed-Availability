@@ -59,6 +59,21 @@ const StaffContextProvider = ({ children }) => {
     }
   };
 
+  const [bedReceipts, setBedReceipts] = useState([]);
+
+  const getAllBedReceipts = async () => {
+    try {
+      const { data } = await axios.get(backendUrl + "/api/staff/get-all-bed-receipts");
+      if (data.success) {
+        setBedReceipts(data.receipts);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const allocateBed = async (bedId, userId, dischargeDate, disease, doctorName) => {
     try {
       const { data } = await axios.post(backendUrl + "/api/staff/allocate-bed", {
@@ -81,6 +96,26 @@ const StaffContextProvider = ({ children }) => {
     }
   };
 
+  const dischargePatient = async (bedId, receiptId) => {
+    try {
+      const { data } = await axios.post(backendUrl + "/api/staff/discharge-patient", {
+        bedId,
+        receiptId
+      });
+      if (data.success) {
+        toast.success(data.message);
+        getAllBeds();
+        getAllBedReceipts();
+      } else {
+        toast.error(data.message);
+      }
+      return data.success;
+    } catch (error) {
+      toast.error(error.message);
+      return false;
+    }
+  };
+
   const value = {
     sToken,
     setSToken,
@@ -89,9 +124,12 @@ const StaffContextProvider = ({ children }) => {
     backendUrl,
     beds,
     users,
+    bedReceipts,
     getAllBeds,
     getAllUsers,
+    getAllBedReceipts,
     allocateBed,
+    dischargePatient
   };
 
   return (

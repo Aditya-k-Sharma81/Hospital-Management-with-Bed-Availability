@@ -32,19 +32,7 @@ export default function Staff_Dashboard() {
 
   const handleConfirmAllocation = async () => {
     if (selectedUser && selectedBed && dischargeDate) {
-      // Pass disease and doctorName to allocateBed context function if it supports it, 
-      // OR Call API directly if context isn't updated? 
-      // Wait, I need to check StaffContext. But assuming I can update the context call or the context just forwards arguments.
-      // Let's assume I need to pass an object or update the context. 
-      // Actually checking StaffContext is safer, but I can't see it now.
-      // I will assume the context wrapper might not support extra args yet.
-      // Better: I will invoke the API call similarly to how the context likely does, or just pass the extra args and hope/ensure the context handles it.
-      // Re-reading logic: The `allocateBed` function inside `Staff_Dashboard` calls `allocateBed` from context.
-      // I should pass an object `req.body` style if the context supports it, OR separate args.
-      // Looking at line 33: `allocateBed(selectedBed, selectedUser._id, dischargeDate)`
-      // I will update this call to include new params, and I MUST update `StaffContext` as well.
-
-      const success = await allocateBed(selectedBed, selectedUser._id, dischargeDate);
+      const success = await allocateBed(selectedBed, selectedUser.userData._id, dischargeDate);
       if (success) {
         setShowModal(false);
         setSelectedUser(null);
@@ -100,9 +88,9 @@ export default function Staff_Dashboard() {
 
                 return (
                   <tr key={user._id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{user.name}</td>
-                    <td className="p-3">{user.email}</td>
-                    <td className="p-3">{user.phone}</td>
+                    <td className="p-3">{user.userData.name}</td>
+                    <td className="p-3">{user.userData.email}</td>
+                    <td className="p-3">{user.userData.phone}</td>
                     <td className="p-3">
                       {isAdmitted ? (
                         <div className="flex flex-col gap-1 items-start">
@@ -114,19 +102,18 @@ export default function Staff_Dashboard() {
                           </span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          {user.admissionStatus === "Discharged" && (
-                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-700">
-                              Discharged
-                            </span>
-                          )}
+                        user.admissionStatus === "Discharged" ? (
+                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-700">
+                            Discharged
+                          </span>
+                        ) : (
                           <button
                             onClick={() => handleAllocateClick(user)}
                             className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
                           >
                             Allocate Bed
                           </button>
-                        </div>
+                        )
                       )}
                     </td>
                   </tr>
