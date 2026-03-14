@@ -66,7 +66,7 @@ const getAllBeds = async (req, res) => {
 //                 receipt.bedNeeded === "Yes" &&
 //                 receipt.bedAllocated === "No"
 //             ) {
-//                 result.push(receipt);   // 👈 duplicate allowed
+//                 result.push(receipt);   // duplicate allowed
 //             }
 //         }
 
@@ -195,13 +195,13 @@ const allocateBed = async (req, res) => {
         let age = 0;
         if (user.dob && user.dob !== "Not Selected") {
             const birthDate = new Date(user.dob);
-            if (!isNaN(birthDate.getTime())) {
+            if (!isNaN(birthDate.getTime())) { // NAN - Not a number
                 age = new Date().getFullYear() - birthDate.getFullYear();
             }
         }
 
         // Check for existing Appointment Receipt to get Medical Details and mark bed as allocated
-        const latestReceipt = await RecieptModal.findOne({ userId }).sort({ createdAt: -1 });
+        const latestReceipt = await RecieptModal.findOne({ userId }).sort({ createdAt: -1 }); // createAt:-1 means descending order or newest first
 
         if (latestReceipt) {
             latestReceipt.bedAllocated = "Yes";

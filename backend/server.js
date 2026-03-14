@@ -17,7 +17,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Adjust for production
+    origin: "*", // Cross Origin Resource Sharing :- communication between frontend and backend running on different origins
   }
 });
 

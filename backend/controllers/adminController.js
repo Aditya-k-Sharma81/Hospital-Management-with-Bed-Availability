@@ -1,12 +1,14 @@
-import validator from "validator";
-import bcrypt from "bcrypt";
-import { v2 as cloudinary } from "cloudinary";
+import validator from "validator";  // Used to validate the string
+import bcrypt from "bcrypt"; // Password increption :- convert plain text in encrypted password
+import { v2 as cloudinary } from "cloudinary"; // upload image to cloudinary
 import jwt from "jsonwebtoken";
 
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModal.js";
 import userModel from "../models/userModel.js";
 import bedModel from "../models/bedModal.js";
+
+// Multer is used for Read uploaded files, temporarily store in disk, Add info to req.file and make available for cloudinary,.. more.
 
 /* ================= ADD DOCTOR ================= */
 
@@ -34,16 +36,19 @@ const addDoctor = async (req, res) => {
       return res.json({ success: false, message: "Missing Details" });
     }
 
-    if (!validator.isEmail(email)) {
+    if (!validator.isEmail(email)) 
+    {
       return res.json({ success: false, message: "Invalid email" });
     }
 
-    if (password.length < 8) {
+    if (password.length < 8) 
+    {
       return res.json({ success: false, message: "Password too short" });
     }
 
     const existingDoctor = await doctorModel.findOne({ email });
-    if (existingDoctor) {
+    if (existingDoctor) 
+    {
       return res.json({ success: false, message: "Email already exists" });
     }
 
@@ -161,6 +166,7 @@ const adminDashboard = async (req, res) => {
     const occupiedBeds = allBeds.filter(b => b.status === 'occupied').length;
     const availableBeds = allBeds.filter(b => b.status === 'available').length;
 
+    //Adds amount only if: Appointment is completed OR Payment is done
     const earnings = appointments.reduce((sum, a) => {
       return a.isCompleted || a.payment ? sum + a.amount : sum;
     }, 0);

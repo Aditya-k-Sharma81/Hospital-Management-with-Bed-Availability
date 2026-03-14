@@ -5,7 +5,7 @@ import userModel from '../models/userModel.js';
 
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'; // load enviroment variable from enviroment file
 
 dotenv.config();
 
@@ -78,7 +78,8 @@ const doctorAppointmentList = async (req, res) => {
 
     const doctorId = req.userId;
 
-    if (!doctorId) {
+    if (!doctorId) 
+    {
       return res.json({ success: false, message: "Doctor ID not found" });
     }
     const appointments = await appointmentModel.find({ docId: doctorId });
@@ -139,7 +140,7 @@ const Reciept = async (req, res) => {
       bedNeeded,
     });
 
-    // ⭐ Mark Appointment as Completed
+    // Mark Appointment as Completed
     const updatedAppt = await appointmentModel.findByIdAndUpdate(
       appointmentId,
       { isCompleted: true },

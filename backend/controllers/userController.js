@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
         }
 
         // Hash password
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(10); // A salt is a random string added to a password before hashing.
         const hashPassword = await bcrypt.hash(password, salt);
 
         const newUser = new userModel({
